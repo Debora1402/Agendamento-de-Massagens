@@ -778,17 +778,29 @@ function confirmCancel(){
 function renderAvailability(){
   const date=document.getElementById('avail-date').value||todayStr();
   const svc=document.getElementById('avail-svc').value;
-  const bks=load(SK.bookings).filter(b=>b.date===date&&b.service===svc&&!b.cancelled);
+  const allBks=load(SK.bookings);
+  const bks=allBks.filter(b=>b.date===date&&b.service===svc&&!b.cancelled);
   const blocked=load(SK.blocked).filter(b=>b.date===date&&(b.svc===svc||b.svc==='all'));
   const times=generateTimes();
   const grid=document.getElementById('avail-grid');
   grid.innerHTML=times.map(time=>{
-    const count=bks.filter(b=>b.time===time).length;
+    const slotBks=bks.filter(b=>b.time===time);
+    const count=slotBks.length;
     const isBlocked=blocked.some(b=>b.time===time);
     let cls='free',statusTxt=`${2-count} vaga(s)`;
     if(isBlocked){cls='blocked';statusTxt='Bloqueado';}
     else if(count>=2){cls='full';statusTxt='Lotado';}
     else if(count===1){cls='partial';statusTxt='1 vaga livre';}
+
+    // names of booked loggers
+    const namesHtml=slotBks.map(b=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;
+        background:rgba(255,255,255,.7);border:1px solid rgba(124,58,237,.12);
+        border-radius:6px;padding:3px 7px;margin-top:5px;">
+        <span style="font-size:.58rem;font-weight:500;color:#1E1B4B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:80px;" title="${b.clientName}">${b.clientName.split(' ')[0]}</span>
+        <button class="sa-btn" style="background:rgba(220,38,38,.08);color:#DC2626;border:1px solid rgba(220,38,38,.2);padding:2px 6px;font-size:.54rem;"
+          onclick="adminCancelBooking(${b.id},'${date}','${svc}');event.stopPropagation()">✕</button>
+      </div>`).join('');
 
     const blockBtn=isBlocked
       ?`<button class="sa-btn sa-unblock" onclick="toggleBlock('${date}','${svc}','${time}',true);event.stopPropagation()">Liberar</button>`
@@ -799,9 +811,21 @@ function renderAvailability(){
     return`<div class="avail-slot ${cls}">
       <span class="slot-time">${time}</span>
       <span class="slot-status">${statusTxt}</span>
-      <div class="slot-actions">${bookBtn}${blockBtn}</div>
+      ${namesHtml}
+      <div class="slot-actions" style="margin-top:${slotBks.length?'6px':'0'}">${bookBtn}${blockBtn}</div>
     </div>`;
   }).join('');
+}
+
+function adminCancelBooking(id,date,svc){
+  if(!confirm('Cancelar este agendamento?')) return;
+  const bks=load(SK.bookings);
+  const idx=bks.findIndex(b=>b.id===id);
+  if(idx>=0) bks[idx].cancelled=true;
+  save(SK.bookings,bks);
+  showToast('✓ Agendamento cancelado.');
+  renderAvailability();
+  renderDashboard();
 }
 function toggleBlock(date,svc,time,isBlocked){
   const blocked=load(SK.blocked);
