@@ -15,6 +15,55 @@
 
 ---
 
+## 🔗 Links de Acesso Rápido
+
+| O quê | Link |
+|---|---|
+| 🌐 Portal de agendamento (usuários) | https://debora1402.github.io/Agendamento-de-Massagens/ |
+| 🔧 Painel admin | https://debora1402.github.io/Agendamento-de-Massagens/admin.html |
+| 🎨 Referência de design | https://debora1402.github.io/Agendamento-de-Massagens/logwellbeing-design.html |
+| 📦 Repositório GitHub | https://github.com/Debora1402/Agendamento-de-Massagens |
+| ⚙️ Settings do repositório | https://github.com/Debora1402/Agendamento-de-Massagens/settings |
+| 📄 GitHub Pages (configuração) | https://github.com/Debora1402/Agendamento-de-Massagens/settings/pages |
+| 🔑 Gerenciar tokens GitHub | https://github.com/settings/tokens |
+| 📁 Ver arquivos do repositório | https://github.com/Debora1402/Agendamento-de-Massagens/tree/main |
+
+---
+
+## 🔑 Credenciais e Tokens
+
+### Acessos do Sistema
+
+| Sistema | Usuário | Senha |
+|---|---|---|
+| Painel Admin (`admin.html`) | `admin` | `admin123` |
+| Botão "Acesso Admin" (sidebar do portal) | — | `admin123` |
+| GitHub (conta) | `Debora1402` | *(sua senha do GitHub)* |
+
+### Token GitHub (Personal Access Token)
+
+> ⚠️ **ATENÇÃO:** Nunca salve o token diretamente neste arquivo — o GitHub detecta e bloqueia automaticamente. Guarde o token em local seguro (ex: bloco de notas offline, gerenciador de senhas).
+
+**Token atual:** *(guarde no seu gerenciador de senhas ou bloco de notas — não coloque aqui)*  
+**Formato:** começa com `ghp_` seguido de 36 caracteres
+
+#### Como gerar um novo token:
+1. Acesse https://github.com/settings/tokens
+2. Clique em **"Generate new token (classic)"**
+3. Nome: `log-wellbeing-claude`
+4. Expiration: **No expiration** (ou 1 ano)
+5. Marque o escopo: ✅ `repo` (acesso total ao repositório)
+6. Clique **"Generate token"** e copie imediatamente
+7. Guarde em local seguro e informe ao Claude no início de cada nova conversa
+
+#### Como o Claude usa o token (para referência):
+```bash
+git clone https://SEU_TOKEN@github.com/Debora1402/Agendamento-de-Massagens.git
+git push origin main
+```
+
+---
+
 ## 📁 Arquivos do Projeto
 
 | Arquivo | Descrição | URL de acesso |
@@ -246,6 +295,7 @@ Olá! Vou te passar o contexto de um projeto que desenvolvemos juntos para que p
 PROJETO: Log Wellbeing — sistema interno de agendamento de massagens da Logcomex
 REPOSITÓRIO: https://github.com/Debora1402/Agendamento-de-Massagens
 URL PÚBLICA: https://debora1402.github.io/Agendamento-de-Massagens/
+TOKEN GITHUB: ghp_XXXXXXXXXXXXXXXX  ← coloque seu token atual aqui
 
 ARQUIVOS:
 - agendamento.html → portal dos colaboradores
@@ -262,13 +312,20 @@ CHAVES localStorage:
 DESIGN:
 - Fonte: Poppins (300/400/500/600/700)
 - Roxo principal: #5B21B6 / #7C3AED / #6D28D9
-- Sidebar: #1E1B4B
+- Sidebar: #1E1B4B (220px fixa, fundo roxo-escuro)
 - Fundo: #F4F5F9
-- Layout: sidebar fixa 220px + banner lilás com ilustração SVG + grid 2 cards
+- Layout: sidebar + banner lilás (#ECE9FF) com ilustração SVG (pessoa na maca) + grid 2 cards
 
 CREDENCIAIS ADMIN: usuário "admin" / senha "admin123"
 
-REGRAS: 1 agendamento/dia por pessoa, 2 vagas por slot, 27 slots/dia (09h-17h40, 20min cada), e-mail @logcomex.com pré-fixado
+REGRAS DE NEGÓCIO:
+- 1 agendamento/dia por pessoa (tentativa extra → modal de remarcação)
+- 2 vagas por slot, 27 slots/dia (09h-17h40, 20min cada)
+- E-mail @logcomex.com pré-fixado no login
+- Admin pode cancelar agendamentos direto na tela de Disponibilidade
+
+DOCUMENTO DE CONTEXTO COMPLETO:
+https://github.com/Debora1402/Agendamento-de-Massagens/blob/main/CONTEXTO_PROJETO.md
 
 [DESCREVA AQUI O QUE VOCÊ QUER MUDAR OU ADICIONAR]
 ```
