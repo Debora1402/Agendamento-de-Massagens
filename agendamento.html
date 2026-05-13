@@ -81,7 +81,7 @@ body{font-family:'Poppins',sans-serif;font-size:15px;background:var(--night);col
 }
 .login-brand{
   font-family:'Cormorant Garamond',serif;
-  font-size:.95rem;font-weight:400;letter-spacing:.08em;
+  font-size:.95rem;font-weight:400;
   color:var(--cream-60);margin-bottom:32px;
   display:flex;align-items:center;gap:10px;
 }
@@ -109,6 +109,19 @@ body{font-family:'Poppins',sans-serif;font-size:15px;background:var(--night);col
 .btn-login:hover{transform:translateY(-1px);box-shadow:0 8px 28px rgba(196,136,74,.28);}
 .btn-login:active{transform:translateY(0);}
 .login-err{font-size:.74rem;color:#E08080;text-align:center;margin-top:10px;display:none;}
+.login-toggle{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:18px;font-size:.74rem;font-weight:300;
+  color:rgba(240,232,216,.38);
+}
+.login-toggle button{
+  background:none;border:none;cursor:pointer;
+  font-family:'Poppins',sans-serif;font-size:.74rem;font-weight:400;
+  color:rgba(196,136,74,.8);text-decoration:underline;text-underline-offset:3px;
+  transition:.15s;padding:0;
+}
+.login-toggle button:hover{color:rgba(220,165,100,.95);}
+.lf-hide{display:none;}
 
 /* ══════════════════════════════════
    TOPBAR
@@ -456,7 +469,7 @@ body{font-family:'Poppins',sans-serif;font-size:15px;background:var(--night);col
 .s-row .k{color:rgba(240,232,216,.42);font-weight:400;}
 .s-row .v{color:rgba(240,232,216,.85);font-weight:600;}
 .field{margin-bottom:14px;}
-.field label{display:block;font-size:.6rem;font-weight:500;text-transform:uppercase;letter-spacing:.12em;color:rgba(240,232,216,.38);margin-bottom:7px;}
+.field label{display:block;font-size:.6rem;font-weight:500;text-transform:uppercase;letter-spacing:.12em;color:rgba(240,232,216,.42);margin-bottom:7px;}
 .field input{
   width:100%;
   background:linear-gradient(150deg,rgba(252,238,218,.05) 0%,rgba(235,220,195,.02) 100%);
@@ -477,7 +490,7 @@ body{font-family:'Poppins',sans-serif;font-size:15px;background:var(--night);col
 .found-note{font-size:.72rem;color:rgba(91,173,138,.8);margin-bottom:10px;display:none;align-items:center;gap:4px;font-weight:500;}
 .btn-primary{width:100%;padding:12px;border-radius:10px;border:none;background:linear-gradient(135deg,#C4884A 0%,#A06832 100%);color:rgba(13,11,14,.9);font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;transition:.2s;letter-spacing:.06em;text-transform:uppercase;box-shadow:0 4px 20px rgba(196,136,74,.2);}
 .btn-primary:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);}
-.btn-primary:disabled{opacity:.22;cursor:not-allowed;}
+.btn-primary:disabled{opacity:.25;cursor:not-allowed;filter:grayscale(.3);}
 .btn-ghost{width:100%;padding:11px;border-radius:10px;margin-top:8px;background:transparent;border:1px solid rgba(240,220,180,.1);color:rgba(240,232,216,.45);font-family:'Poppins',sans-serif;font-size:.8rem;cursor:pointer;transition:.15s;}
 .btn-ghost:hover{border-color:rgba(240,220,180,.22);color:rgba(240,232,216,.72);}
 .btn-ghost-danger{width:100%;padding:11px;border-radius:10px;margin-top:8px;background:transparent;border:1px solid rgba(192,80,96,.18);color:rgba(192,80,96,.7);font-family:'Poppins',sans-serif;font-size:.8rem;cursor:pointer;transition:.15s;}
@@ -692,12 +705,16 @@ body{font-family:'Poppins',sans-serif;font-size:15px;background:var(--night);col
 <!-- ═══ LOGIN ═══ -->
 <div id="page-login" class="page active">
   <div class="login-card">
-    <div class="login-brand"><div class="login-brand-dot"></div>Log <span>Wellbeing</span></div>
-    <div class="login-h">Bem-vindo de volta</div>
-    <div class="login-s">Faça login com seus dados corporativos para acessar o portal de agendamento.</div>
+    <div class="login-brand"><div class="login-brand-dot"></div><span class="tb-brand-log">Log</span><span class="tb-brand-well">Wellbeing</span></div>
+    <div class="login-h" id="login-title">Bem-vindo de volta</div>
+    <div class="login-s" id="login-subtitle">Faça login com seus dados corporativos para acessar o portal de agendamento.</div>
     <div class="lf">
       <label>Nome completo</label>
       <input id="login-name" type="text" placeholder="Seu nome completo" autocomplete="name" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="lf lf-hide" id="lf-dept">
+      <label>Setor / Equipe <span style="opacity:.4;font-weight:300;text-transform:none;letter-spacing:0">(opcional)</span></label>
+      <input id="login-dept" type="text" placeholder="Ex: Produto, Engenharia...">
     </div>
     <div class="lf">
       <label>E-mail</label>
@@ -708,7 +725,11 @@ body{font-family:'Poppins',sans-serif;font-size:15px;background:var(--night);col
       </div>
     </div>
     <div class="login-err" id="login-error">Preencha seu nome e e-mail para continuar.</div>
-    <button class="btn-login" onclick="doLogin()">Entrar no portal</button>
+    <button class="btn-login" id="login-btn" onclick="doLogin()">Entrar no portal</button>
+    <div class="login-toggle">
+      <span id="login-toggle-label">Primeiro acesso?</span>
+      <button onclick="toggleLoginMode()" id="login-toggle-btn">Criar conta</button>
+    </div>
   </div>
 </div>
 
@@ -928,6 +949,19 @@ function formatDateFull(s){
 }
 let session={name:'',email:''};
 function handleEmailInput(input){input.value=input.value.replace(/@.*/,'');}
+let _loginMode='login';
+function toggleLoginMode(){
+  _loginMode=_loginMode==='login'?'signup':'login';
+  const isSignup=_loginMode==='signup';
+  document.getElementById('login-title').textContent=isSignup?'Criar conta':'Bem-vindo de volta';
+  document.getElementById('login-subtitle').textContent=isSignup
+    ?'Preencha seus dados para criar seu acesso ao portal de agendamento.'
+    :'Faça login com seus dados corporativos para acessar o portal de agendamento.';
+  document.getElementById('lf-dept').classList.toggle('lf-hide',!isSignup);
+  document.getElementById('login-btn').textContent=isSignup?'Criar conta':'Entrar no portal';
+  document.getElementById('login-toggle-label').textContent=isSignup?'Já tem acesso?':'Primeiro acesso?';
+  document.getElementById('login-toggle-btn').textContent=isSignup?'Fazer login':'Criar conta';
+}
 function openAdminGate(){
   let overlay=document.getElementById('adm-gate-overlay');
   if(!overlay){
