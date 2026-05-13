@@ -579,58 +579,65 @@ body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min
         </div>
         <!-- Illustration: person lying on massage table + therapist hands + plants -->
         <div class="wb-illus">
-          <svg viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg viewBox="0 0 200 130" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- soft background circles -->
-            <circle cx="148" cy="52" r="44" stroke="#C4B5FD" stroke-width="1" stroke-dasharray="3 3" opacity=".4"/>
-            <circle cx="148" cy="52" r="30" stroke="#C4B5FD" stroke-width="1" opacity=".25"/>
-            <circle cx="148" cy="52" r="16" stroke="#C4B5FD" stroke-width="1" opacity=".15"/>
+            <circle cx="148" cy="55" r="44" stroke="#C4B5FD" stroke-width="1" stroke-dasharray="3 3" opacity=".4"/>
+            <circle cx="148" cy="55" r="30" stroke="#C4B5FD" stroke-width="1" opacity=".25"/>
+            <circle cx="148" cy="55" r="16" stroke="#C4B5FD" stroke-width="1" opacity=".15"/>
 
-            <!-- massage table legs -->
-            <line x1="28" y1="80" x2="22" y2="104" stroke="#9B7CEA" stroke-width="1.4" stroke-linecap="round"/>
-            <line x1="118" y1="80" x2="124" y2="104" stroke="#9B7CEA" stroke-width="1.4" stroke-linecap="round"/>
-            <line x1="42" y1="80" x2="38" y2="104" stroke="#9B7CEA" stroke-width="1.2" stroke-linecap="round"/>
-            <line x1="104" y1="80" x2="108" y2="104" stroke="#9B7CEA" stroke-width="1.2" stroke-linecap="round"/>
+            <!-- BASE / FOOTER -->
+            <path d="M38 112 Q38 118 44 118 L118 118 Q124 118 124 112 L124 108 L38 108 Z" stroke="#7C3AED" stroke-width="1.6" stroke-linejoin="round"/>
+            <!-- base front ridge -->
+            <path d="M44 108 L44 112" stroke="#9B7CEA" stroke-width="1.2" stroke-linecap="round"/>
+            <path d="M118 108 L118 112" stroke="#9B7CEA" stroke-width="1.2" stroke-linecap="round"/>
 
-            <!-- table top surface -->
-            <rect x="18" y="70" width="112" height="12" rx="6" stroke="#7C3AED" stroke-width="1.6"/>
+            <!-- SEAT BODY (main reclined shell) -->
+            <path d="M40 108 L38 78 Q38 72 44 70 L116 70 Q122 70 122 78 L120 108 Z" stroke="#7C3AED" stroke-width="1.6" stroke-linejoin="round"/>
 
-            <!-- pillow at head end -->
-            <ellipse cx="34" cy="70" rx="12" ry="5" stroke="#9B7CEA" stroke-width="1.3"/>
+            <!-- SEAT PADDING lines (horizontal comfort lines) -->
+            <path d="M42 82 Q80 80 118 82" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+            <path d="M41 90 Q80 88 119 90" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+            <path d="M40 98 Q80 96 120 98" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".6"/>
 
-            <!-- person lying face-down on table -->
-            <!-- body -->
-            <path d="M46 67 Q73 60 106 65" stroke="#7C3AED" stroke-width="2" stroke-linecap="round"/>
-            <!-- head (circle) -->
-            <circle cx="38" cy="65" r="7" stroke="#7C3AED" stroke-width="1.5"/>
-            <!-- hair lines -->
-            <path d="M33 60 Q38 56 43 60" stroke="#9B7CEA" stroke-width="1.2" stroke-linecap="round"/>
-            <!-- arm hanging down -->
-            <path d="M60 67 Q58 74 55 78" stroke="#9B7CEA" stroke-width="1.3" stroke-linecap="round"/>
-            <!-- legs -->
-            <path d="M100 65 Q108 64 116 67" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+            <!-- BACKREST (reclined back) -->
+            <path d="M44 70 L50 30 Q52 24 58 24 L102 24 Q108 24 110 30 L116 70" stroke="#7C3AED" stroke-width="1.6" stroke-linejoin="round"/>
+            <!-- backrest padding lines -->
+            <path d="M52 58 Q80 56 108 58" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+            <path d="M51 47 Q80 45 109 47" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".5"/>
+            <path d="M52 37 Q80 35 108 37" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".4"/>
 
-            <!-- therapist hands applying massage -->
-            <!-- left hand -->
-            <path d="M70 60 Q68 53 72 50 Q76 48 78 52 Q80 48 83 50 Q85 54 82 58" stroke="#7C3AED" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M78 52 L78 44" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/>
-            <path d="M83 50 L84 43" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/>
-            <!-- right hand -->
-            <path d="M88 60 Q86 53 90 50 Q94 48 96 52 Q98 48 101 50 Q103 54 100 58" stroke="#7C3AED" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M96 52 L96 44" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/>
-            <path d="M101 50 L102 43" stroke="#7C3AED" stroke-width="1.2" stroke-linecap="round"/>
+            <!-- HEADREST -->
+            <path d="M58 24 Q60 14 80 12 Q100 14 102 24" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round"/>
+            <path d="M63 22 Q80 16 97 22" stroke="#9B7CEA" stroke-width="1.1" stroke-linecap="round" opacity=".7"/>
 
-            <!-- small sparkle lines (relaxation) -->
-            <line x1="54" y1="50" x2="54" y2="44" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".7"/>
-            <line x1="51" y1="47" x2="57" y2="47" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".7"/>
-            <line x1="62" y1="46" x2="62" y2="41" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".5"/>
-            <line x1="59" y1="43.5" x2="65" y2="43.5" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".5"/>
+            <!-- LEFT ARMREST -->
+            <path d="M44 70 L34 68 Q28 68 28 74 L28 84 Q28 88 34 88 L44 86" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- armrest padding -->
+            <path d="M30 74 L30 84" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".5"/>
 
-            <!-- plant -->
-            <path d="M155 108 L157 90 L163 90 L165 108 Z" stroke="#9B7CEA" stroke-width="1.2" stroke-linejoin="round"/>
-            <rect x="153" y="106" width="14" height="5" rx="2.5" stroke="#9B7CEA" stroke-width="1.2"/>
-            <path d="M160 90 Q153 80 155 71 Q161 74 160 90" stroke="#7C3AED" stroke-width="1.3" stroke-linecap="round"/>
-            <path d="M160 90 Q167 78 169 70 Q163 72 160 90" stroke="#7C3AED" stroke-width="1.3" stroke-linecap="round"/>
-            <line x1="160" y1="90" x2="161" y2="72" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round"/>
+            <!-- RIGHT ARMREST -->
+            <path d="M116 70 L126 68 Q132 68 132 74 L132 84 Q132 88 126 88 L116 86" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- armrest padding -->
+            <path d="M130 74 L130 84" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".5"/>
+
+            <!-- LEG REST / OTTOMAN (extended footrest) -->
+            <path d="M120 108 L130 108 Q136 108 138 102 L140 88 Q140 82 134 80 L122 80" stroke="#7C3AED" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <!-- legrest padding -->
+            <path d="M124 96 Q132 95 138 96" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".5"/>
+            <path d="M122 88 Q130 87 136 88" stroke="#9B7CEA" stroke-width="1" stroke-linecap="round" opacity=".4"/>
+
+            <!-- ROLLER NODES (massage rollers detail) -->
+            <circle cx="72" cy="48" r="3" stroke="#7C3AED" stroke-width="1.2"/>
+            <circle cx="88" cy="48" r="3" stroke="#7C3AED" stroke-width="1.2"/>
+            <circle cx="80" cy="60" r="2.5" stroke="#9B7CEA" stroke-width="1.2" opacity=".8"/>
+
+            <!-- sparkle / relaxation lines -->
+            <line x1="155" y1="38" x2="155" y2="32" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".8"/>
+            <line x1="152" y1="35" x2="158" y2="35" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".8"/>
+            <line x1="163" y1="28" x2="163" y2="23" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+            <line x1="160" y1="25.5" x2="166" y2="25.5" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".6"/>
+            <line x1="170" y1="42" x2="170" y2="38" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".5"/>
+            <line x1="168" y1="40" x2="172" y2="40" stroke="#C4B5FD" stroke-width="1" stroke-linecap="round" opacity=".5"/>
           </svg>
         </div>
       </div>
