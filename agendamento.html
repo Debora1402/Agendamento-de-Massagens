@@ -172,11 +172,12 @@ body{font-family:var(--lx-font-body);font-size:15px;background:var(--lx-bg);colo
     radial-gradient(ellipse 80% 40% at 50% 100%, rgba(11,13,25,.3) 0%, transparent 55%);
 }
 .sb-logo{
-  padding:28px 24px 20px;
+  padding:28px 20px 20px;
   border-bottom:1px solid rgba(226,208,250,.12);
   position:relative;z-index:1;
+  overflow:visible;
 }
-.sb-logo svg{width:130px;height:auto;}
+.sb-logo svg{width:130px;height:auto;display:block;overflow:visible;}
 .sb-section{font-size:.55rem;font-weight:600;text-transform:uppercase;letter-spacing:.18em;color:rgba(226,208,250,.35);padding:20px 24px 8px;position:relative;z-index:1;}
 .sb-nav{display:flex;flex-direction:column;gap:2px;padding:0 12px;position:relative;z-index:1;}
 .sb-btn{
