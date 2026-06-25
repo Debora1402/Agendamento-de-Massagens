@@ -1046,5 +1046,18 @@ function cancelBooking(id){openCancelModal(id,false);}
 function cancelLastBooking(){const bks=loadData(STORAGE_KEYS.bookings);const last=[...bks].reverse().find(b=>b.date===todayStr()&&!b.cancelled);if(!last)return;openCancelModal(last.id,true);}
 function showToast(msg){const old=document.querySelector('.toast');if(old)old.remove();const t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 </script>
+
+<script>
+// Fix: sync all sidebar logos to match the home page logo
+document.addEventListener('DOMContentLoaded', function() {
+  var homeLogo = document.querySelector('#page-home .sb-logo svg');
+  if (homeLogo) {
+    var allLogos = document.querySelectorAll('.sb-logo svg');
+    allLogos.forEach(function(logo) {
+      logo.outerHTML = homeLogo.outerHTML;
+    });
+  }
+});
+</script>
 </body>
 </html>
