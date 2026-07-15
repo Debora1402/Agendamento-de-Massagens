@@ -551,6 +551,11 @@ body{font-family:var(--lx-font-body);font-size:15px;background:var(--lx-bg);colo
 </style>
 </head>
 <body>
+<div id="lw-loading-overlay" style="position:fixed;inset:0;z-index:99999;background:#F5F6FC;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-family:'Poppins',sans-serif;">
+  <div style="width:40px;height:40px;border-radius:50%;border:3px solid #EDE4FB;border-top-color:#6613D0;animation:lw-spin 0.8s linear infinite;"></div>
+  <div style="color:#2D085D;font-size:0.85rem;font-weight:500;">Carregando dados...</div>
+</div>
+<style>@keyframes lw-spin{to{transform:rotate(360deg);}}</style>
 <div id="app">
 
 <!-- ══ LOGIN ══ -->
@@ -829,12 +834,102 @@ body{font-family:var(--lx-font-body);font-size:15px;background:var(--lx-bg);colo
   </div>
 </div>
 
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-app.js";
+import { getFirestore, collection, doc, onSnapshot, setDoc, deleteDoc, runTransaction } from "https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore.js";
+
+const firebaseConfig={apiKey:"AIzaSyDyMUVVaOAuE2MMlvyp5CVo-4YBEqRz99Q",authDomain:"log-wellbeing.firebaseapp.com",projectId:"log-wellbeing",storageBucket:"log-wellbeing.firebasestorage.app",messagingSenderId:"881032882339",appId:"1:881032882339:web:e62a600271429aa0143716",measurementId:"G-W53MQGJWZY"};
+const fbApp=initializeApp(firebaseConfig);
+const db=getFirestore(fbApp);
+
+const COLS={lw_v7_bookings:'logwellbeing_bookings',lw_v7_clients:'logwellbeing_clients',lw_v7_blocked:'logwellbeing_blocked'};
+const idOf={lw_v7_bookings:b=>String(b.id),lw_v7_clients:c=>c.email,lw_v7_blocked:b=>`${b.date}_${b.svc}_${b.time}`};
+
+window._lwCache={lw_v7_bookings:[],lw_v7_clients:[],lw_v7_blocked:[]};
+window._lwReady=false;
+const _readyFlags={};
+let _resolveReady;
+window._lwReadyPromise=new Promise(res=>{_resolveReady=res;});
+function checkAllReady(){
+  if(Object.keys(COLS).every(k=>_readyFlags[k])&&!window._lwReady){
+    window._lwReady=true;_resolveReady();
+    document.dispatchEvent(new Event('lw-data-ready'));
+  }
+}
+Object.keys(COLS).forEach(localKey=>{
+  onSnapshot(collection(db,COLS[localKey]),snap=>{
+    window._lwCache[localKey]=snap.docs.map(d=>d.data());
+    _readyFlags[localKey]=true;
+    checkAllReady();
+    document.dispatchEvent(new Event('lw-data-changed'));
+  },err=>console.error('Firestore onSnapshot error ['+COLS[localKey]+']:',err));
+});
+
+window._lwSave=async function(localKey,newArray){
+  const colName=COLS[localKey];const getId=idOf[localKey];
+  const prevArray=window._lwCache[localKey]||[];
+  const prevById={};prevArray.forEach(item=>{prevById[getId(item)]=item;});
+  const newIds=new Set();const writes=[];
+  newArray.forEach(item=>{
+    const id=getId(item);newIds.add(id);const prev=prevById[id];
+    if(!prev||JSON.stringify(prev)!==JSON.stringify(item))writes.push(setDoc(doc(db,colName,id),item));
+  });
+  Object.keys(prevById).forEach(id=>{if(!newIds.has(id))writes.push(deleteDoc(doc(db,colName,id)));});
+  window._lwCache[localKey]=newArray;
+  try{await Promise.all(writes);}catch(err){console.error('Firestore save error ['+colName+']:',err);}
+};
+
+window._lwCreateBooking=async function(booking,maxSlots){
+  const slotId=`${booking.service}_${booking.date}_${booking.time}`;
+  const slotRef=doc(db,'logwellbeing_slots',slotId);
+  const bookingRef=doc(db,'logwellbeing_bookings',String(booking.id));
+  try{
+    await runTransaction(db,async(tx)=>{
+      const slotSnap=await tx.get(slotRef);
+      const current=slotSnap.exists()?(slotSnap.data().count||0):0;
+      if(current>=maxSlots)throw new Error('SLOT_FULL');
+      tx.set(slotRef,{count:current+1},{merge:true});
+      tx.set(bookingRef,booking);
+    });
+    return{ok:true};
+  }catch(err){
+    if(err&&err.message==='SLOT_FULL')return{ok:false,reason:'FULL'};
+    console.error('createBooking transaction error:',err);return{ok:false,reason:'ERROR'};
+  }
+};
+
+window._lwCancelBooking=async function(bookingId){
+  const bookingRef=doc(db,'logwellbeing_bookings',String(bookingId));
+  try{
+    await runTransaction(db,async(tx)=>{
+      const bSnap=await tx.get(bookingRef);
+      if(!bSnap.exists())throw new Error('NOT_FOUND');
+      const bData=bSnap.data();
+      if(bData.cancelled)return;
+      const slotId=`${bData.service}_${bData.date}_${bData.time}`;
+      const slotRef=doc(db,'logwellbeing_slots',slotId);
+      const slotSnap=await tx.get(slotRef);
+      const current=slotSnap.exists()?(slotSnap.data().count||0):0;
+      tx.set(slotRef,{count:Math.max(0,current-1)},{merge:true});
+      tx.set(bookingRef,{...bData,cancelled:true});
+    });
+    return{ok:true};
+  }catch(err){console.error('cancelBooking transaction error:',err);return{ok:false};}
+};
+</script>
 <script>
+document.addEventListener('lw-data-ready',()=>{const o=document.getElementById('lw-loading-overlay');if(o)o.remove();});
+if(window._lwReady){const o=document.getElementById('lw-loading-overlay');if(o)o.remove();}
+document.addEventListener('lw-data-changed',()=>{
+  const active=document.querySelector('.page.active');if(!active)return;
+  if(active.id==='page-appointments')renderAppointments();
+  if(active.id==='page-datetime')initDatetime();
+});
 const STORAGE_KEYS={bookings:'lw_v7_bookings',clients:'lw_v7_clients'};
 const MAX_SLOTS=2;
 const LABELS={cadeira:'Cadeira de Massagem',pes:'Massageador de Pés'};
-function loadData(k){try{return JSON.parse(localStorage.getItem(k))||[];}catch{return[];}}
-function saveData(k,d){localStorage.setItem(k,JSON.stringify(d));}
+function loadData(k){return(window._lwCache&&window._lwCache[k])?window._lwCache[k].slice():[];}
+function saveData(k,d){if(window._lwSave)window._lwSave(k,d);}
 function todayStr(){const d=new Date();return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function formatDateFull(s){
   const[y,m,d]=s.split('-').map(Number);const dt=new Date(y,m-1,d);
@@ -996,15 +1091,21 @@ async function sendConfirmationEmail(booking){
   }
 }
 
-function submitBooking(){
+async function submitBooking(){
   const email=session.email;const name=session.name;
   if(!email||!name){showToast('Erro de sessão.');return;}
   if(!state.rescheduleId){const existing=loadData(STORAGE_KEYS.bookings).find(b=>b.clientEmail===email&&b.date===state.selectedDate&&!b.cancelled);if(existing){showAlreadyBookedModal(existing,state.service);return;}}
   const taken=getBookingsForSlot(state.service,state.selectedDate,state.selectedSlot);
   if(taken.length>=MAX_SLOTS){showToast('Horário lotado. Escolha outro.');showPage('page-datetime');return;}
-  if(state.rescheduleId){const bks=loadData(STORAGE_KEYS.bookings);const idx=bks.findIndex(b=>b.id===state.rescheduleId);if(idx>=0)bks[idx].cancelled=true;saveData(STORAGE_KEYS.bookings,bks);state.rescheduleId=null;}
+  const rescheduleIdToCancel=state.rescheduleId;
   const booking={id:Date.now(),service:state.service,date:state.selectedDate,time:state.selectedSlot,agenda:state.slotAgenda,clientEmail:email,clientName:name,createdAt:new Date().toISOString()};
-  const bks=loadData(STORAGE_KEYS.bookings);bks.push(booking);saveData(STORAGE_KEYS.bookings,bks);
+  const result=await window._lwCreateBooking(booking,MAX_SLOTS);
+  if(!result.ok){
+    if(result.reason==='FULL'){showToast('Horário lotado. Escolha outro.');showPage('page-datetime');}
+    else{showToast('Erro ao confirmar. Tente novamente.');}
+    return;
+  }
+  if(rescheduleIdToCancel){await window._lwCancelBooking(rescheduleIdToCancel);state.rescheduleId=null;}
   renderConfirm(booking);showPage('page-confirm');
   setTimeout(()=>sendConfirmationEmail(booking),600);
 }
@@ -1039,9 +1140,13 @@ function rescheduleBooking(id,svc){startReschedule(id,svc);}
 let _cid=null,_cLast=false;
 function openCancelModal(id,isLast){_cid=id;_cLast=isLast||false;document.getElementById('cancel-modal').style.display='block';document.getElementById('cancel-confirm-btn').onclick=executeCancelBooking;}
 function closeCancelModal(){document.getElementById('cancel-modal').style.display='none';_cid=null;_cLast=false;}
-function executeCancelBooking(){
-  closeCancelModal();const bks=loadData(STORAGE_KEYS.bookings);const idx=bks.findIndex(b=>b.id===_cid);if(idx>=0)bks[idx].cancelled=true;saveData(STORAGE_KEYS.bookings,bks);showToast('✓ Reserva cancelada.');
-  if(_cLast){showPage('page-appointments');}else{const card=document.querySelector(`.appt-card[data-id="${_cid}"]`);if(card){card.classList.add('cancelled');const n=card.querySelector('.appt-name');if(n)n.style.textDecoration='line-through';const a=card.querySelector('.appt-acts');if(a)a.innerHTML=`<span class="tag tag-cancel">Cancelado</span>`;}}
+async function executeCancelBooking(){
+  const idToCancel=_cid;const wasLast=_cLast;
+  closeCancelModal();
+  const result=await window._lwCancelBooking(idToCancel);
+  if(!result.ok){showToast('Erro ao cancelar. Tente novamente.');return;}
+  showToast('✓ Reserva cancelada.');
+  if(wasLast){showPage('page-appointments');}else{const card=document.querySelector(`.appt-card[data-id="${idToCancel}"]`);if(card){card.classList.add('cancelled');const n=card.querySelector('.appt-name');if(n)n.style.textDecoration='line-through';const a=card.querySelector('.appt-acts');if(a)a.innerHTML=`<span class="tag tag-cancel">Cancelado</span>`;}}
 }
 function cancelBooking(id){openCancelModal(id,false);}
 function cancelLastBooking(){const bks=loadData(STORAGE_KEYS.bookings);const last=[...bks].reverse().find(b=>b.date===todayStr()&&!b.cancelled);if(!last)return;openCancelModal(last.id,true);}
