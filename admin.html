@@ -851,7 +851,7 @@ function getExpRange(period){
 
 function _buildExportRows(start, end, statusFilter, svcFilter){
   const SVC_LABELS = {cadeira:'Cadeira de Massagem',pes:'Massageador de Pés'};
-  let bookings = loadData('lw_v7_bookings')
+  let bookings = load('lw_v7_bookings')
     .filter(b => b.date >= start && b.date <= end);
   if(statusFilter==='active')    bookings = bookings.filter(b=>!b.cancelled);
   if(statusFilter==='cancelled') bookings = bookings.filter(b=>b.cancelled);
@@ -1363,7 +1363,7 @@ function getExpRange(period){
 
 function _buildExportRows(start, end, statusFilter, svcFilter){
   const SVC_LABELS = {cadeira:'Cadeira de Massagem',pes:'Massageador de Pés'};
-  let bookings = loadData('lw_v7_bookings')
+  let bookings = load('lw_v7_bookings')
     .filter(b => b.date >= start && b.date <= end);
   if(statusFilter==='active')    bookings = bookings.filter(b=>!b.cancelled);
   if(statusFilter==='cancelled') bookings = bookings.filter(b=>b.cancelled);
