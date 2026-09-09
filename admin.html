@@ -369,6 +369,12 @@ tr:hover td{background:#FAFAFA;}
 .exp-confirm{padding:9px 18px;border-radius:8px;border:none;background:var(--purple);color:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px;}
 .exp-confirm:hover{background:var(--purple-mid);}
 .exp-confirm svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.exp-fmt-row{display:flex;gap:8px;margin-bottom:20px;}
+.exp-fmt-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;border-radius:10px;border:1.5px solid #e5e5e5;background:#fafafa;color:#666;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:.15s;}
+.exp-fmt-btn svg{width:15px;height:15px;}
+.exp-fmt-btn:hover{border-color:var(--purple-light);color:var(--purple);background:var(--purple-50);}
+.exp-fmt-btn.sel{background:var(--purple);color:#fff;border-color:var(--purple);}
+.exp-fmt-btn.sel svg{stroke:#fff;}
 
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -613,7 +619,7 @@ tr:hover td{background:#FAFAFA;}
 <div class="exp-overlay" id="exp-modal" style="display:none;" onclick="if(event.target===this)closeExpModal()">
   <div class="exp-box">
     <div class="exp-title">Exportar agendamentos</div>
-    <div class="exp-sub">Escolha o período, status e formato do arquivo Excel.</div>
+    <div class="exp-sub">Escolha o período, filtros e o formato de exportação.</div>
 
     <div class="exp-label">Período</div>
     <div class="exp-period-grid">
@@ -637,9 +643,21 @@ tr:hover td{background:#FAFAFA;}
       </select>
     </div>
 
+    <div class="exp-label">Formato</div>
+    <div class="exp-fmt-row">
+      <button class="exp-fmt-btn sel" id="exp-fmt-xlsx" onclick="selFmt('xlsx')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 8l8 8M16 8l-8 8"/></svg>
+        Excel (.xlsx)
+      </button>
+      <button class="exp-fmt-btn" id="exp-fmt-csv" onclick="selFmt('csv')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="12" y2="17"/></svg>
+        CSV (.csv)
+      </button>
+    </div>
+
     <div class="exp-footer">
       <button class="exp-cancel" onclick="closeExpModal()">Cancelar</button>
-      <button class="exp-confirm" onclick="doExport()">
+      <button class="exp-confirm" id="exp-dl-btn" onclick="doExport()">
         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Baixar Excel
       </button>
@@ -786,16 +804,30 @@ window._lwCancelBooking=async function(bookingId){
 </script>
 <script>
 
-// ── EXPORTAÇÃO EXCEL ──
+// ── EXPORTAÇÃO ──
 let _expPeriod = 'day';
+let _expFmt = 'xlsx';
 
-function openExpModal(){ document.getElementById('exp-modal').style.display='flex'; }
+function openExpModal(){
+  document.getElementById('exp-modal').style.display='flex';
+  selFmt('xlsx');
+}
 function closeExpModal(){ document.getElementById('exp-modal').style.display='none'; }
 
 function selPeriod(btn, period){
   document.querySelectorAll('.exp-period-btn').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
   _expPeriod = period;
+}
+
+function selFmt(fmt){
+  _expFmt = fmt;
+  document.getElementById('exp-fmt-xlsx').classList.toggle('sel', fmt==='xlsx');
+  document.getElementById('exp-fmt-csv').classList.toggle('sel', fmt==='csv');
+  const dlBtn = document.getElementById('exp-dl-btn');
+  if(dlBtn) dlBtn.innerHTML = fmt==='csv'
+    ? '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar CSV'
+    : '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar Excel';
 }
 
 function getExpRange(period){
@@ -817,32 +849,15 @@ function getExpRange(period){
   return {start:`${now.getFullYear()}-01-01`,end:`${now.getFullYear()}-12-31`,label:labels[period]};
 }
 
-function doExport(){
-  const {start,end,label} = getExpRange(_expPeriod);
-  const statusFilter = document.getElementById('exp-status').value;
-  const svcFilter = document.getElementById('exp-svc').value;
+function _buildExportRows(start, end, statusFilter, svcFilter){
   const SVC_LABELS = {cadeira:'Cadeira de Massagem',pes:'Massageador de Pés'};
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const dateStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
-
   let bookings = loadData('lw_v7_bookings')
     .filter(b => b.date >= start && b.date <= end);
-
   if(statusFilter==='active')    bookings = bookings.filter(b=>!b.cancelled);
   if(statusFilter==='cancelled') bookings = bookings.filter(b=>b.cancelled);
   if(svcFilter!=='all')          bookings = bookings.filter(b=>b.service===svcFilter);
-
-  if(!bookings.length){
-    alert('Nenhum agendamento encontrado para os filtros selecionados.');
-    return;
-  }
-
-  // Ordena por data e horário
   bookings.sort((a,b)=> a.date!==b.date ? a.date.localeCompare(b.date) : a.time.localeCompare(b.time));
-
-  // Monta linhas
-  const rows = bookings.map(b=>({
+  return bookings.map(b=>({
     'Protocolo': b.id,
     'Data': b.date,
     'Horário': b.time,
@@ -852,37 +867,56 @@ function doExport(){
     'Status': b.cancelled?'Cancelado':'Confirmado',
     'Criado em': b.createdAt ? b.createdAt.slice(0,16).replace('T',' ') : ''
   }));
+}
 
-  // SheetJS
-  const ws = XLSX.utils.json_to_sheet(rows);
+function doExport(){
+  const {start,end,label} = getExpRange(_expPeriod);
+  const statusFilter = document.getElementById('exp-status').value;
+  const svcFilter = document.getElementById('exp-svc').value;
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const dateStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+  const filename = `LogWellbeing_${label}_${dateStr}`;
 
-  // Larguras de coluna
-  ws['!cols'] = [
-    {wch:14},{wch:12},{wch:10},{wch:22},{wch:24},{wch:30},{wch:12},{wch:18}
-  ];
+  const rows = _buildExportRows(start, end, statusFilter, svcFilter);
+  if(!rows.length){
+    alert('Nenhum agendamento encontrado para os filtros selecionados.');
+    return;
+  }
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Agendamentos');
-
-  // Aba de resumo
-  const total = rows.length;
-  const confirmados = rows.filter(r=>r.Status==='Confirmado').length;
-  const cancelados = rows.filter(r=>r.Status==='Cancelado').length;
-  const summary = [
-    {' ':'Período', '  ':label},
-    {' ':'De', '  ':start},
-    {' ':'Até', '  ':end},
-    {' ':'Total de agendamentos', '  ':total},
-    {' ':'Confirmados', '  ':confirmados},
-    {' ':'Cancelados', '  ':cancelados},
-    {' ':'Taxa de cancelamento', '  ':total ? Math.round(cancelados/total*100)+'%' : '0%'},
-    {' ':'Exportado em', '  ':new Date().toLocaleString('pt-BR')},
-  ];
-  const ws2 = XLSX.utils.json_to_sheet(summary);
-  ws2['!cols'] = [{wch:26},{wch:20}];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Resumo');
-
-  XLSX.writeFile(wb, `LogWellbeing_${label}_${dateStr}.xlsx`);
+  if(_expFmt === 'csv'){
+    const headers = Object.keys(rows[0]);
+    const escape = v => { const s=String(v??''); return (s.includes(',')||s.includes('"')||s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s; };
+    const csvLines = [headers.join(','), ...rows.map(r=>headers.map(h=>escape(r[h])).join(','))];
+    const blob = new Blob(['\uFEFF'+csvLines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${filename}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } else {
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:14},{wch:12},{wch:10},{wch:22},{wch:24},{wch:30},{wch:12},{wch:18}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Agendamentos');
+    const total = rows.length;
+    const confirmados = rows.filter(r=>r.Status==='Confirmado').length;
+    const cancelados  = rows.filter(r=>r.Status==='Cancelado').length;
+    const summary = [
+      {' ':'Período',              '  ':label},
+      {' ':'De',                   '  ':start},
+      {' ':'Até',                  '  ':end},
+      {' ':'Total de agendamentos','  ':total},
+      {' ':'Confirmados',          '  ':confirmados},
+      {' ':'Cancelados',           '  ':cancelados},
+      {' ':'Taxa de cancelamento', '  ':total ? Math.round(cancelados/total*100)+'%' : '0%'},
+      {' ':'Exportado em',         '  ':new Date().toLocaleString('pt-BR')},
+    ];
+    const ws2 = XLSX.utils.json_to_sheet(summary);
+    ws2['!cols'] = [{wch:26},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Resumo');
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+  }
   closeExpModal();
 }
 
@@ -1282,16 +1316,30 @@ function showToast(msg){
 }
 
 
-// ── EXPORTAÇÃO EXCEL ──
+// ── EXPORTAÇÃO ──
 let _expPeriod = 'day';
+let _expFmt = 'xlsx';
 
-function openExpModal(){ document.getElementById('exp-modal').style.display='flex'; }
+function openExpModal(){
+  document.getElementById('exp-modal').style.display='flex';
+  selFmt('xlsx');
+}
 function closeExpModal(){ document.getElementById('exp-modal').style.display='none'; }
 
 function selPeriod(btn, period){
   document.querySelectorAll('.exp-period-btn').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
   _expPeriod = period;
+}
+
+function selFmt(fmt){
+  _expFmt = fmt;
+  document.getElementById('exp-fmt-xlsx').classList.toggle('sel', fmt==='xlsx');
+  document.getElementById('exp-fmt-csv').classList.toggle('sel', fmt==='csv');
+  const dlBtn = document.getElementById('exp-dl-btn');
+  if(dlBtn) dlBtn.innerHTML = fmt==='csv'
+    ? '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar CSV'
+    : '<svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> Baixar Excel';
 }
 
 function getExpRange(period){
@@ -1313,32 +1361,15 @@ function getExpRange(period){
   return {start:`${now.getFullYear()}-01-01`,end:`${now.getFullYear()}-12-31`,label:labels[period]};
 }
 
-function doExport(){
-  const {start,end,label} = getExpRange(_expPeriod);
-  const statusFilter = document.getElementById('exp-status').value;
-  const svcFilter = document.getElementById('exp-svc').value;
+function _buildExportRows(start, end, statusFilter, svcFilter){
   const SVC_LABELS = {cadeira:'Cadeira de Massagem',pes:'Massageador de Pés'};
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const dateStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
-
   let bookings = loadData('lw_v7_bookings')
     .filter(b => b.date >= start && b.date <= end);
-
   if(statusFilter==='active')    bookings = bookings.filter(b=>!b.cancelled);
   if(statusFilter==='cancelled') bookings = bookings.filter(b=>b.cancelled);
   if(svcFilter!=='all')          bookings = bookings.filter(b=>b.service===svcFilter);
-
-  if(!bookings.length){
-    alert('Nenhum agendamento encontrado para os filtros selecionados.');
-    return;
-  }
-
-  // Ordena por data e horário
   bookings.sort((a,b)=> a.date!==b.date ? a.date.localeCompare(b.date) : a.time.localeCompare(b.time));
-
-  // Monta linhas
-  const rows = bookings.map(b=>({
+  return bookings.map(b=>({
     'Protocolo': b.id,
     'Data': b.date,
     'Horário': b.time,
@@ -1348,37 +1379,56 @@ function doExport(){
     'Status': b.cancelled?'Cancelado':'Confirmado',
     'Criado em': b.createdAt ? b.createdAt.slice(0,16).replace('T',' ') : ''
   }));
+}
 
-  // SheetJS
-  const ws = XLSX.utils.json_to_sheet(rows);
+function doExport(){
+  const {start,end,label} = getExpRange(_expPeriod);
+  const statusFilter = document.getElementById('exp-status').value;
+  const svcFilter = document.getElementById('exp-svc').value;
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const dateStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+  const filename = `LogWellbeing_${label}_${dateStr}`;
 
-  // Larguras de coluna
-  ws['!cols'] = [
-    {wch:14},{wch:12},{wch:10},{wch:22},{wch:24},{wch:30},{wch:12},{wch:18}
-  ];
+  const rows = _buildExportRows(start, end, statusFilter, svcFilter);
+  if(!rows.length){
+    alert('Nenhum agendamento encontrado para os filtros selecionados.');
+    return;
+  }
 
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Agendamentos');
-
-  // Aba de resumo
-  const total = rows.length;
-  const confirmados = rows.filter(r=>r.Status==='Confirmado').length;
-  const cancelados = rows.filter(r=>r.Status==='Cancelado').length;
-  const summary = [
-    {' ':'Período', '  ':label},
-    {' ':'De', '  ':start},
-    {' ':'Até', '  ':end},
-    {' ':'Total de agendamentos', '  ':total},
-    {' ':'Confirmados', '  ':confirmados},
-    {' ':'Cancelados', '  ':cancelados},
-    {' ':'Taxa de cancelamento', '  ':total ? Math.round(cancelados/total*100)+'%' : '0%'},
-    {' ':'Exportado em', '  ':new Date().toLocaleString('pt-BR')},
-  ];
-  const ws2 = XLSX.utils.json_to_sheet(summary);
-  ws2['!cols'] = [{wch:26},{wch:20}];
-  XLSX.utils.book_append_sheet(wb, ws2, 'Resumo');
-
-  XLSX.writeFile(wb, `LogWellbeing_${label}_${dateStr}.xlsx`);
+  if(_expFmt === 'csv'){
+    const headers = Object.keys(rows[0]);
+    const escape = v => { const s=String(v??''); return (s.includes(',')||s.includes('"')||s.includes('\n')) ? `"${s.replace(/"/g,'""')}"` : s; };
+    const csvLines = [headers.join(','), ...rows.map(r=>headers.map(h=>escape(r[h])).join(','))];
+    const blob = new Blob(['\uFEFF'+csvLines.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${filename}.csv`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } else {
+    const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:14},{wch:12},{wch:10},{wch:22},{wch:24},{wch:30},{wch:12},{wch:18}];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Agendamentos');
+    const total = rows.length;
+    const confirmados = rows.filter(r=>r.Status==='Confirmado').length;
+    const cancelados  = rows.filter(r=>r.Status==='Cancelado').length;
+    const summary = [
+      {' ':'Período',              '  ':label},
+      {' ':'De',                   '  ':start},
+      {' ':'Até',                  '  ':end},
+      {' ':'Total de agendamentos','  ':total},
+      {' ':'Confirmados',          '  ':confirmados},
+      {' ':'Cancelados',           '  ':cancelados},
+      {' ':'Taxa de cancelamento', '  ':total ? Math.round(cancelados/total*100)+'%' : '0%'},
+      {' ':'Exportado em',         '  ':new Date().toLocaleString('pt-BR')},
+    ];
+    const ws2 = XLSX.utils.json_to_sheet(summary);
+    ws2['!cols'] = [{wch:26},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Resumo');
+    XLSX.writeFile(wb, `${filename}.xlsx`);
+  }
   closeExpModal();
 }
 
