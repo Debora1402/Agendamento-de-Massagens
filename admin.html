@@ -369,6 +369,9 @@ tr:hover td{background:#FAFAFA;}
 .exp-confirm{padding:9px 18px;border-radius:8px;border:none;background:var(--purple);color:#fff;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:6px;}
 .exp-confirm:hover{background:var(--purple-mid);}
 .exp-confirm svg{width:13px;height:13px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+.exp-picker{display:flex;gap:8px;margin-top:-12px;margin-bottom:16px;}
+.exp-picker select{flex:1;padding:9px 10px;border-radius:8px;border:1.5px solid #e5e5e5;font-size:.78rem;font-family:'Poppins',sans-serif;color:var(--text);background:#fff;cursor:pointer;outline:none;transition:.15s;}
+.exp-picker select:focus{border-color:var(--purple-light);}
 .exp-fmt-row{display:flex;gap:8px;margin-bottom:20px;}
 .exp-fmt-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:11px 8px;border-radius:10px;border:1.5px solid #e5e5e5;background:#fafafa;color:#666;font-family:'Poppins',sans-serif;font-size:.78rem;font-weight:500;cursor:pointer;transition:.15s;}
 .exp-fmt-btn svg{width:15px;height:15px;}
@@ -625,8 +628,22 @@ tr:hover td{background:#FAFAFA;}
     <div class="exp-period-grid">
       <button class="exp-period-btn sel" onclick="selPeriod(this,'day')">📅 Hoje</button>
       <button class="exp-period-btn" onclick="selPeriod(this,'week')">📆 Esta semana</button>
-      <button class="exp-period-btn" onclick="selPeriod(this,'month')">🗓️ Este mês</button>
-      <button class="exp-period-btn" onclick="selPeriod(this,'year')">📊 Este ano</button>
+      <button class="exp-period-btn" onclick="selPeriod(this,'month')">🗓️ Por mês</button>
+      <button class="exp-period-btn" onclick="selPeriod(this,'year')">📊 Por ano</button>
+    </div>
+    <div class="exp-picker" id="exp-month-picker" style="display:none;">
+      <select id="exp-pick-month">
+        <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+        <option value="3">Março</option><option value="4">Abril</option>
+        <option value="5">Maio</option><option value="6">Junho</option>
+        <option value="7">Julho</option><option value="8">Agosto</option>
+        <option value="9">Setembro</option><option value="10">Outubro</option>
+        <option value="11">Novembro</option><option value="12">Dezembro</option>
+      </select>
+      <select id="exp-pick-month-year"></select>
+    </div>
+    <div class="exp-picker" id="exp-year-picker" style="display:none;">
+      <select id="exp-pick-year"></select>
     </div>
 
     <div class="exp-label">Filtros</div>
@@ -811,6 +828,19 @@ let _expFmt = 'xlsx';
 function openExpModal(){
   document.getElementById('exp-modal').style.display='flex';
   selFmt('xlsx');
+  // Populate year selects with last 5 years
+  const now = new Date();
+  const yr = now.getFullYear();
+  const monthYrSel = document.getElementById('exp-pick-month-year');
+  const yearSel = document.getElementById('exp-pick-year');
+  monthYrSel.innerHTML = '';
+  yearSel.innerHTML = '';
+  for(let y = yr; y >= yr - 4; y--){
+    monthYrSel.innerHTML += `<option value="${y}">${y}</option>`;
+    yearSel.innerHTML += `<option value="${y}">${y}</option>`;
+  }
+  // Default month to current
+  document.getElementById('exp-pick-month').value = now.getMonth() + 1;
 }
 function closeExpModal(){ document.getElementById('exp-modal').style.display='none'; }
 
@@ -818,6 +848,8 @@ function selPeriod(btn, period){
   document.querySelectorAll('.exp-period-btn').forEach(b=>b.classList.remove('sel'));
   btn.classList.add('sel');
   _expPeriod = period;
+  document.getElementById('exp-month-picker').style.display = period === 'month' ? 'flex' : 'none';
+  document.getElementById('exp-year-picker').style.display  = period === 'year'  ? 'flex' : 'none';
 }
 
 function selFmt(fmt){
@@ -834,19 +866,25 @@ function getExpRange(period){
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
   const fmt = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-  const labels = {day:'Diário',week:'Semanal',month:'Mensal',year:'Anual'};
-  if(period==='day') return {start:fmt(now),end:fmt(now),label:labels[period]};
+  const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  if(period==='day') return {start:fmt(now),end:fmt(now),label:'Diário'};
   if(period==='week'){
     const day=now.getDay(); const mon=new Date(now); mon.setDate(now.getDate()-(day===0?6:day-1));
     const sun=new Date(mon); sun.setDate(mon.getDate()+6);
-    return {start:fmt(mon),end:fmt(sun),label:labels[period]};
+    return {start:fmt(mon),end:fmt(sun),label:'Semanal'};
   }
   if(period==='month'){
-    const s=`${now.getFullYear()}-${pad(now.getMonth()+1)}-01`;
-    const last=new Date(now.getFullYear(),now.getMonth()+1,0);
-    return {start:s,end:fmt(last),label:labels[period]};
+    const m = parseInt(document.getElementById('exp-pick-month').value);
+    const y = parseInt(document.getElementById('exp-pick-month-year').value);
+    const s = `${y}-${pad(m)}-01`;
+    const last = new Date(y, m, 0);
+    return {start:s, end:fmt(last), label:`${MONTHS[m-1]} ${y}`};
   }
-  return {start:`${now.getFullYear()}-01-01`,end:`${now.getFullYear()}-12-31`,label:labels[period]};
+  if(period==='year'){
+    const y = parseInt(document.getElementById('exp-pick-year').value);
+    return {start:`${y}-01-01`, end:`${y}-12-31`, label:`Ano ${y}`};
+  }
+  return {start:fmt(now),end:fmt(now),label:'Diário'};
 }
 
 function _buildExportRows(start, end, statusFilter, svcFilter){
